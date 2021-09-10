@@ -1,10 +1,187 @@
 <html>
 <head>
-  <title>caMicroscope User Guide</title>
-  <meta charset="utf-8" />
-  <link rel="shortcut icon" type="image/x-icon" href="./img/favicon.ico">
+    <title>caMicroscope User Gudie</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="./css/main.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="./img/favicon.ico">
 </head>
 <body>
-  <p>coming soon</p>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark" style="position: sticky; margin-top: -4em;">
+        <div class="container-fluid">
+        </div>
+    </nav>
+    <!-- Main -->
+    <section id="main" class="wrapper">
+        <div class="inner">
+        <header class="major">
+            <h2>caMicroscope User Guide</h2>
+        </header>
+        <!-- Content -->
+        <div class="content">
+          <h2 id="selecting-an-image">Selecting an Image</h2>
+          <p>Depending on what is providing the image metadata, a different login process may be necessary. For public instances, no log in is necessary, and you can proceed to view slides. Use of other tools, such as annotations may or may not require login in this case.
+          For slim instances, login should be done through a redirect directly. For pathDB instances, login should be done on the login link on the main page.
+          At this point, select a collection, if applicable, and proceed to open or &quot;view&quot; the image of your choice.</p>
+          <h2 id="viewing-an-image">Viewing an Image</h2>
+          <p>Once an image is open, you can pan around the image by either clicking and dragging (when no conflicting tool, such as the pen, is open), or by moving the red bounding box in the viewport in the bottom right.
+          Zooming can be accomplished through the scroll wheel, pinch events on a touch screen, by using the zoom slider or its associated buttons, or by clicking on the zoom number and inputting a different number.</p>
+          <h2 id="using-tools">Using Tools</h2>
+          <p>The toolbar is in the top-left of the main content window. Use the toolbar buttons to manipulate the slide. To close any toolbar button, click the same button again or a new button.</p>
+          <table>
+          <thead>
+          <tr>
+          <th>Tool</th>
+          <th>Name</th>
+          <th>Function</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/apps/v4/24px.svg" alt=""></td>
+          <td>Annotations</td>
+          <td>Opens the Annotation panel, where you can select which annotation set to view, name that annotation set, add optional notes about the annotation set, save the annotation set, and reset the panel to its original state.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/view_list/v4/24px.svg" alt=""></td>
+          <td>Layer Manager</td>
+          <td>Opens the Layers Manager panel, where you can select which layers to view.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/home/v4/24px.svg" alt=""></td>
+          <td>Home</td>
+          <td>Return to the data table so that you can open another slide.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/create/v4/24px.svg" alt=""></td>
+          <td>Draw</td>
+          <td>Draw thin lines, thick lines, or polygons on the image. To maintain the integrity of measurements, avoid drawing shapes that overlap or intersect one another.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/colorize/v4/24px.svg" alt=""></td>
+          <td>Preset Labels</td>
+          <td>Use a preset annotation type immediately to quickly annotate a silde consistently.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/search/v4/24px.svg" alt=""></td>
+          <td>Magnifier</td>
+          <td>The Magnifier works like a magnifying glass and allows you to see the slide at normal magnification (1.0), low magnification (0.5), or high magnification (2.0). Click a magnification level and place the bounding box on the area of the slide you want to magnify.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/space_bar/v4/24px.svg" alt=""></td>
+          <td>Measurement</td>
+          <td>Drag this tool on the slide to learn the measurement in micrometers.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/share/v4/24px.svg" alt=""></td>
+          <td>Share View</td>
+          <td>Opens a window with a URL to the current presentation state of the slide including the magnification level, layers that are currently open, and your position on the image.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/view_carousel/v4/24px.svg" alt=""></td>
+          <td>Side by Side Viewer</td>
+          <td>Shows the Layer Manager panel, the left and right layers, and inset window. For the right and left layer, select which layer you want to view.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/satellite/v4/24px.svg" alt=""></td>
+          <td>Heatmap</td>
+          <td>For a slide with heatmap data, opens the choices of heatmaps available, as well as ways of displaying the heatmaps. The gradient shows all of the values on the selected spectrum for the field you selected. Contains a heatmap edit pen function.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/label/v4/24px.svg" alt=""></td>
+          <td>Labeling</td>
+          <td>Use this tool to draw a circle or rectangle around a tumor region, measure an area on the slide, download labels, and submit a bug report. The Labeling tool has its own toolbar with tools in the following order from left to right: return to the previous slide, place a square on the slide, place a circle on the slide, measure an area, download labels, and submit a bug report. Click the left arrow at the far right of the toolbar to hide it, then click the right arrow to show it.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/timeline/v6/24px.svg" alt=""></td>
+          <td>Segment</td>
+          <td>This tool allows you to display, count, and export nuclear segmentations on the image. Clicking this tool opens the following custom toolbar.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/aspect_ratio/v4/24px.svg" alt=""></td>
+          <td>Model</td>
+          <td>Show results from a pre-trained tensorflow compatible model on a ROI of the slide.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/get_app/v4/24px.svg" alt=""></td>
+          <td>Download Slide</td>
+          <td>Download the slide image to your system</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/playlist_add_check/v8/24px.svg" alt=""></td>
+          <td>Mark Reviewed</td>
+          <td>Use to signify the completion of review of a slide.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/bug_report/v4/24px.svg" alt=""></td>
+          <td>Bug Report</td>
+          <td>Report a bug or give feedback.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/camera_enhance/v4/24px.svg" alt=""></td>
+          <td>Slide Capture</td>
+          <td>Click to take a screenshot of the slide and annotations on it.</td>
+          </tr>
+          <tr>
+          <td><img src="https://fonts.gstatic.com/s/i/materialicons/help/v4/24px.svg" alt=""></td>
+          <td>Tutorial</td>
+          <td>Click to view a guided tour of the viewer tools.</td>
+          </tr>
+          </tbody>
+          </table>
+          <h2 id="toolbar-shortcuts">Toolbar Shortcuts</h2>
+          <table>
+          <thead>
+          <tr>
+          <th>Tool</th>
+          <th>Shortcut</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+          <td>Annotation</td>
+          <td>Ctrl + a</td>
+          </tr>
+          <tr>
+          <td>Magnifier</td>
+          <td>Ctrl + m</td>
+          </tr>
+          <tr>
+          <td>Measurement</td>
+          <td>Ctrl + r</td>
+          </tr>
+          <tr>
+          <td>Side-by-Side</td>
+          <td>Ctrl + s</td>
+          </tr>
+          <tr>
+          <td>Close all tools</td>
+          <td>ESC</td>
+          </tr>
+          </tbody>
+          </table>
+
+        </div>
+    </section>
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="content">
+            <div class="inner">
+                <section class="about">
+                    U24 CA18092401A1, <b>Tools to Analyze Morphology and Spatially Mapped Molecular Data</b>
+                </section>
+            </div>
+        </div>
+    </footer>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
+    <script src="./js/jquery.min.js"></script>
+    <script src="./js/jquery.dropotron.min.js"></script>
+    <script src="./js/jquery.scrollex.min.js"></script>
+    <script src="./js/skel.min.js"></script>
+    <script src="./js/util.js"></script>
 </body>
 </html>
