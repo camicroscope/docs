@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/collapsiblelist/collapsiblelist.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/collapsiblelist/collapsiblelist.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// proposal:
+// test:
+// constructor:options:id,title,icon,isExpand,
+// setList : refresh UI
+// triggerContent(itemId, action = 'close')
+// addContent(itemId, elt)
+// clearContent(itemId)
+// callback
+
+/* attributes in options
+    options{
+        id - element id
+        list:[
+            {
+                id:identity for one specific item
+                title: text display on head
+                icon:google icon
+                content: stting or DOM Element
+                isExpand:
+            }
+        ]
+    }
+    // TODO a function
+*/
+
+
+/**
+ *
+ * CaMicroscope Collapsible List. the item in this list consists of the item's head and the item's body.
+ * Click on the head, if item's body is collapsed then expand it, if not, then expand it.
+ * Only one of item can be expanded.
+ * @constructor
+ * @param {Object} options
+ *        All required and optional settings for instantiating a new instance of a Collapsible List.
+ * @param {String} options.id
+ *        Id of the element to append the Collapsible List's container element to.
+ * @param {Object[]} list
+ *        The list of items in Collapsible List
+ * @param {String} list.id
+ *        Item id, which uses to query item
+ * @param {String} list.title
+ *        Item text title
+ * @param {String} [list.icon]
+ *        The name of material-icons for the item icon
+ * @param {String|Element} list.content
+ *        The content that the item body has.
+ * @param {String} [list.isExpand = false]
+ *        The content expand or not.
+ * @param {Function} [changeCallBack]
+ *        when the expanded item changes the event is fired.
+ *        Return {id: item id,isExpand: the state of current item[expand or not]}
+ *
+ */
+function CollapsibleList(options) {
+  this.name = 'CollapsibleList';
+  /*
+        [{
+            id -
+            head -
+            content -
+        }...]
+    */
+
+  /**
+     * @property {Object[]} __v_models
+     *           The view model
+     * @property {String} __v_models.id
+     *           the id that identifies the item
+     * @property {String} __v_models.title
+     *           the title that shows in the head part
+     * @property {String} __v_models.icon
+     *           The name of material-icons for the item icon
+     * @property {String} __v_models.content
+     *           The content that the item body has.
+     * @property {String} [__v_models.isExpand = false]
+     *           The item is expanded or not.
+     */
+  this.__v_models = [];
+
+  /*
+        list:[
+            {
+                id: ,
+                title: ,
+                icon: ,
+                content:string
+                isExpand:,
+
+            }
+        ]
+    */
+  this.setting = {
+  };
+
+  extend(this.setting, options);
+
+  // attach container element
+  this.elt = document.getElementById(this.setting.id);
+  if (!this.elt &amp;&amp; !this.setting.viewer) {
+    console.error(`${this.name}: No Viewer or DOM Element`);
+    return;
+  }
+
+  // create UI
+  this.__refresh();
+}
+
+/**
+ * @private
+ * create items (head, content) for collapsible list by using options
+ * @param {Object[]} options
+ *        The list of items in Collapsible List
+ * @param {String} options.id
+ *        Item id, which uses to query item
+ * @param {String} options.title
+ *        Item text title
+ * @param {String} [options.icon]
+ *        The name of material-icons for the item icon
+ * @param {String|Element} options.content
+ *        The content that the item body has.
+ * @param {String} [options.isExpand = false]
+ *        The content expand or not.
+ */
+CollapsibleList.prototype.__createItem = function(options) {
+  /*
+        create the item head
+    */
+  // the head
+  const head = document.createElement('div');
+  head.classList.add('item_head');
+
+  // the icon for expand/collapse
+  const addIcon = document.createElement('i');
+  addIcon.classList.add('material-icons');
+  addIcon.classList.add('md-18');
+  head.appendChild(addIcon);
+
+  // the icon for customize
+  let icon;
+  if (options.icon) {
+    icon = document.createElement('i');
+    icon.classList.add('material-icons');
+    icon.classList.add('md-18');
+    icon.textContent = options.icon;
+    head.appendChild(icon);
+  }
+
+  // the title
+  const title = document.createElement('span');
+  title.textContent = options.title;
+  head.appendChild(title);
+
+  this.elt.appendChild(head);
+
+
+  /*
+        create the item content
+    */
+
+  // create item body
+  const body = document.createElement('div');
+  body.classList.add('item_body');
+  if (options.isExpand) {
+    addIcon.textContent = 'remove';
+    body.classList.add('expand');
+  } else {
+    addIcon.textContent = 'add';
+    body.classList.add('collapse');
+  }
+
+  // ceate item content
+  const content = document.createElement('div');
+  content.classList.add('item_content');
+
+  // add content
+  if (typeof options.content === 'string') { // string template
+    content.innerHTML = options.content;
+  } else if (options.content instanceof Element) {
+    content.appendChild(options.content); // DOM element
+  }
+
+  body.appendChild(content);
+  this.elt.appendChild(body);
+
+
+  // events
+  head.addEventListener('click', this.__click_head.bind(this));
+
+  return {head: head, body: body};
+};
+
+
+/**
+ * @private
+ * the event that will be triggered when click on the head of a item.
+ * @param  {Event} e click event
+ */
+CollapsibleList.prototype.__click_head = function(e) {
+  const head = e.currentTarget;
+  const body = head.nextElementSibling;
+  for (let i = this.__v_models.length - 1; i >= 0; i--) {
+    const item = this.__v_models[i];
+    if (item.elt.head !== head) {
+      item.elt.body.classList.remove('expand');
+      item.elt.body.classList.add('collapse');
+      item.elt.body.previousElementSibling.firstChild.innerHTML = 'add';
+    }
+  }
+  if (body.classList.toggle('collapse')) head.querySelector('i').innerHTML = 'add';
+  if (body.classList.toggle('expand')) head.querySelector('i').innerHTML = 'remove';
+
+  if (this.setting.changeCallBack) {
+    const data = this.__v_models.map( (item) => {
+      return {
+        id: item.id,
+        isExpand: item.elt.body.classList.contains('expand')?true:false,
+      };
+    });
+
+    this.setting.changeCallBack.call(this, data);
+  }
+};
+
+/**
+ * set the item list. UI refresh automatically.
+ * @param {object[]} list
+ *        The list of items in Collapsible List
+ * @param {String} list.id
+ *        Item id, which uses to query item
+ * @param {String} list.title
+ *        Item text title
+ * @param {String} [list.icon]
+ *        The name of material-icons for the item icon
+ * @param {String|Element} list.content
+ *        The content that the item body has.
+ *
+ */
+CollapsibleList.prototype.setList = function(list) {
+  if (list) this.setting.list = list;
+  this.__refresh();
+};
+
+/**
+ * Render UI based on the options.
+ *
+ */
+CollapsibleList.prototype.__refresh = function() {
+  // has item list
+  if (!this.setting.list instanceof Array) {
+    console.error(`${this.name}: No Data List`);
+    return;
+  }
+
+  //
+  empty(this.elt);
+  this.elt.classList.add('clloapsible_container');
+  // this.elt.style.flex = 1;
+
+  this.__v_models = this.setting.list.slice();
+  // create a list
+  for (let i = 0; i &lt; this.__v_models.length; i++) {
+    const itemOptions = this.__v_models[i];
+    itemOptions.elt = this.__createItem(itemOptions);
+  }
+};
+
+
+CollapsibleList.prototype.collapse = function() {
+  for (let i = this.__v_models.length - 1; i >= 0; i--) {
+    const item = this.__v_models[i];
+    item.elt.body.classList.remove('expand');
+    item.elt.body.classList.add('collapse');
+  }
+};
+/*
+    id: item's id
+    action - open/close
+*/
+/**
+ * trigger item that expands or collapses item's body.
+ * @param  {String} itemId
+ *         item id that identifies an item on the list
+ * @param  {String} [action='close']
+ *         two option: 'open' or 'close'
+ */
+CollapsibleList.prototype.triggerContent = function(itemId, action = 'close') {
+  if (action == 'open') {
+    const item = this.__v_models.find((item) => item.id===itemId);
+    if (item) {
+      this.collapse();
+      item.elt.body.classList.remove('collapse');
+      item.elt.body.classList.add('expand');
+      item.elt.head.querySelector('i').textContent = 'remove';
+    }
+  } else if (action == 'close') {
+    const item = this.__v_models.find((item) => item.id===itemId);
+    if (item) {
+      item.elt.body.classList.remove('expand');
+      item.elt.body.classList.add('collapse');
+      item.elt.head.querySelector('i').textContent = 'add';
+    }
+  } else {
+    console.log(`${this.name}:No actions`);
+    return;
+  }
+  if (this.setting.changeCallBack) {
+    const data = this.__v_models.map( (item) => {
+      return {
+        id: item.id,
+        isExpand: item.elt.body.classList.contains('expand')?true:false,
+      };
+    });
+
+    this.setting.changeCallBack.call(this, data);
+  }
+};
+
+CollapsibleList.prototype.displayContent = function(itemId, action = true, part = 'all') {
+  const item = this.__v_models.find((item) => item.id === itemId);
+  if (item) {
+    switch (part) {
+      case 'head':
+        item.elt.head.style.display = action?'flex':'none';
+        break;
+      case 'body':
+        item.elt.body.style.display = action?'block':'none';
+        // statements_1
+        break;
+      default:
+        item.elt.head.style.display = action?'flex':'none';
+        item.elt.body.style.display = action?'block':'none';
+        // statements_def
+        break;
+    }
+  }
+};
+
+/**
+ * Add the content of a specific item body by using Id.
+ * @param {String} itemId
+ *        item id that identifies an item on the list
+ * @param {String|ELement} elt
+ *        The content that the item body has.
+ */
+CollapsibleList.prototype.addContent = function(itemId, elt) {
+  const item = this.__v_models.find((one) => one.id === itemId);
+  if (item &amp;&amp; item.elt) {
+    const content = item.elt.body.querySelector('.item_content');
+    if (elt instanceof Element) content.appendChild(elt);
+    if (typeof elt === 'string') {
+      const div = document.createElement('div');
+      div.innerHTML = elt;
+      const childern = [...div.children];
+
+      childern.forEach((child) =>{
+        content.appendChild(child);
+      });
+    };
+    return true;
+  } else {
+    console.warn('id is invalid...');
+    return false;
+  }
+};
+
+/**
+ * Clear the all content of a specific item body by using Id.
+ * @param {String} itemId
+ *        item id that identifies an item on the list
+ *
+ */
+CollapsibleList.prototype.clearContent = function(itemId) {
+  const item = this.__v_models.find((one) => one.id === itemId);
+  if (item &amp;&amp; item.elt) {
+    const content = item.elt.body.querySelector('.item_content');
+    empty(content);
+    return true;
+  } else {
+    console.warn('id is invalid...');
+    return false;
+  }
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CaMessage.html">CaMessage</a></li><li><a href="CaMic.html">CaMic</a></li><li><a href="CaToolbar.html">CaToolbar</a></li><li><a href="CollapsibleList.html">CollapsibleList</a></li><li><a href="LayersViewer.html">LayersViewer</a></li><li><a href="Loading.html">Loading</a></li><li><a href="MessageQueue.html">MessageQueue</a></li><li><a href="MultSelector.html">MultSelector</a></li><li><a href="OperationPanel.html">OperationPanel</a></li><li><a href="PopupPanel.html">PopupPanel</a></li><li><a href="segmentationanno.html">segmentationanno</a></li><li><a href="SideMenu.html">SideMenu</a></li><li><a href="Spyglass.html">Spyglass</a></li><li><a href="Store.html">Store</a></li><li><a href="StyleContextMenu.html">StyleContextMenu</a></li></ul><h3>Global</h3><ul><li><a href="global.html#elt">elt</a></li><li><a href="global.html#objToParamStr">objToParamStr</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Wed Sep 15 2021 19:57:08 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

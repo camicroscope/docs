@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/messagequeue/messagequeue.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/messagequeue/messagequeue.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// proposal:
+// test case:
+// 1. constructor - positions
+// 2. add - check style, check text
+// 3. addError
+// 4. addWarning
+// 5. multiple messages.
+
+/**
+ * MessageQueue. A queue of hint messages that show the message permanently and sequently
+ * @constructor
+ * @param {Object} options
+ *        All required and optional settings for instantiating a new instance of a MessageQueue.
+ *
+ * @param {String} [options.position=top-left]
+ *        The position of MessageQueue instance shows up. 'top-left', 'top-right', 'bottom-left', 'bottom-right'.
+ */
+class MessageQueue {
+  constructor(options) {
+    this.className = 'MessageQueue';
+
+    this.setting = {
+      position: 'top-left', // top-left top-right bottom-left bottom-right
+    };
+    // user setting
+    if (options&amp;&amp;options.position) this.setting.position = options.position;
+
+    this.elt = document.getElementById(this.setting.id);
+    if (!this.elt &amp;&amp; this.setting.element) {
+      this.elt = this.setting.element;
+    }
+
+    //
+    if (!this.elt) {
+      // create main
+      this.elt = document.createElement('div');
+      document.body.appendChild(this.elt);
+    }
+    this.elt.classList.add('bullet-container');
+    switch (this.setting.position) {
+      case 'top-left':
+        // top-left
+        this.elt.style.top = 0;
+        this.elt.style.left = 0;
+
+        break;
+      case 'top-right':
+        // top-right
+
+        this.elt.style.top = 0;
+        this.elt.style.right = 0;
+        break;
+      case 'bottom-left':
+        // bottom-left
+
+        this.elt.style.bottom = 0;
+        this.elt.style.left = 0;
+        break;
+      case 'bottom-right':
+        // bottom-right
+
+        this.elt.style.bottom = 0;
+        this.elt.style.right = 0;
+        break;
+      default:
+        // statements_def
+        break;
+    }
+  }
+
+  /**
+     * add a error message into the queue.
+     * @param {String} text
+     *        the content of the message
+     * @param {Number} [time=5000]
+     *        the time, in milliseconds (thousandths of a second), the timer should delay to destroy this message.
+     */
+  addError(text, time = 5000) {
+    this.__add(text, 'error', time);
+  }
+  /**
+     * add a warning message into the queue.
+     * @param {String} text
+     *        the content of the message
+     * @param {Number} [time=3000]
+     *        the time, in milliseconds (thousandths of a second), the timer should delay to destroy this message.
+     */
+  addWarning(text, time = 5000) {
+    this.__add(text, 'warning', time);
+  }
+
+  /**
+     * add a plain message into the queue.
+     * @param {String} text
+     *        the content of the message
+     * @param {Number} [time=1000]
+     *        the time, in milliseconds (thousandths of a second), the timer should delay to destroy this message.
+     */
+  add(text, time = 5000) {
+    this.__add(text, 'info', time);
+  }
+
+  addSmall(text, time = 1000) {
+    this.__add(text, 'small', time);
+  }
+  /**
+     * @private
+     * add the different type of message to the message queue.
+     * @param  {String} text
+     *         the content of the message
+     * @param  {String} [type=info]
+     *         the type of the message. 'info' - information, 'warning' - warning message, 'error' - error message.
+     * @param  {Number} [time=1000]
+     *         the time, in milliseconds (thousandths of a second), the timer should delay to destroy this message.
+     */
+  __add(text, type='info', time = 1000) {
+    const div = MessageQueue.createBullet(text, type);
+        this.setting.position.includes('bottom')?
+        this.elt.appendChild(div):this.elt.insertBefore(div, this.elt.firstChild);
+        if (this.setting.position.includes('right')) div.classList.add('right');
+
+        div.addEventListener('webkitTransitionEnd', this.__destroy.bind(div));
+        div.addEventListener('transitionend', this.__destroy.bind(div));
+
+        setTimeout(function() {
+          div.classList.add('hide');
+        }, time);
+  }
+  /**
+     * @private
+     * remove the message from the queue
+     * @param  {Event} e
+     *         Event
+     */
+  __destroy(e) {
+    if (e.propertyName == 'opacity') {
+      this.parentNode.removeChild(this);
+    }
+  }
+
+  /**
+     * a static helper that create the message bullet
+     * @param  {String} text
+     *         the content of the message
+     * @param  {Strinf} type
+     *         the type of the message. 'info' - information, 'warning' - warning message, 'error' - error message.
+     * @return {HTMLElement} the div element that represents a message
+     */
+  static createBullet(text, type) {
+    const div = document.createElement('div');
+    div.classList.add('bullet');
+    div.classList.add(type);
+    div.innerHTML = text;
+    return div;
+  }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CaMessage.html">CaMessage</a></li><li><a href="CaMic.html">CaMic</a></li><li><a href="CaToolbar.html">CaToolbar</a></li><li><a href="CollapsibleList.html">CollapsibleList</a></li><li><a href="LayersViewer.html">LayersViewer</a></li><li><a href="Loading.html">Loading</a></li><li><a href="MessageQueue.html">MessageQueue</a></li><li><a href="MultSelector.html">MultSelector</a></li><li><a href="OperationPanel.html">OperationPanel</a></li><li><a href="PopupPanel.html">PopupPanel</a></li><li><a href="segmentationanno.html">segmentationanno</a></li><li><a href="SideMenu.html">SideMenu</a></li><li><a href="Spyglass.html">Spyglass</a></li><li><a href="Store.html">Store</a></li><li><a href="StyleContextMenu.html">StyleContextMenu</a></li></ul><h3>Global</h3><ul><li><a href="global.html#elt">elt</a></li><li><a href="global.html#objToParamStr">objToParamStr</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Wed Sep 15 2021 19:57:08 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: core/extension/openseadragon-overlays-manage.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: core/extension/openseadragon-overlays-manage.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// openseadragon-overlays-manager.js
+// Draw
+// proposal:
+// test:
+//
+
+/**
+ * OpenSeadragon Overlays Manage Plugin 0.0.1 based on canvas overlay plugin.
+ * A OpenSeadragon plugin that provides a way to mange multiple overlays.
+ * @constructor
+ * @param {Object} [options]
+ *        Allows configurable properties to be entirely specified by passing an options object to the constructor.
+ * @param {Object} options.viewer
+ *        A instance of viewer in Openseadragon.
+ * @param {Object} [zIndex=100]
+ *        specifies the z-order of a positioned element
+ */
+(function($) {
+  if (!$) {
+    $ = require('openseadragon');
+    if (!$) {
+      throw new Error('OpenSeadragon is missing.');
+    }
+  }
+
+  // check version
+  if (!$.version || $.version.major &lt; 2) {
+    throw new Error('This version of OpenSeadragonScalebar requires ' +
+                'OpenSeadragon version 2.2.0+');
+  }
+  $.Viewer.prototype.overlaysManager = function(options) {
+    if (!this.omanager) {
+      options = options || {};
+      options.viewer = this;
+      this.omanager = new $.OverlaysManager(options);
+    } else {
+      // this.omanager.updateOptions(options);
+    }
+  };
+
+  $.OverlaysManager = function(options) {
+    this._viewer = options.viewer;
+    this.overlays = [];
+    this.events = {
+      highlight: this.highlight.bind(this),
+      click: this.pathClick.bind(this),
+      updateView: this.updateView.bind(this),
+      zooming: this._zooming.bind(this),
+      panning: this._panning.bind(this),
+      drawing: this._drawing.bind(this),
+    };
+    // -- create container div, and hover, display canvas -- //
+    this._containerWidth = 0;
+    this._containerHeight = 0;
+
+    // create container div
+    this._div = document.createElement( 'div');
+    this._div.style.position = 'absolute';
+    this._div.style.left = 0;
+    this._div.style.top = 0;
+    this._div.style.width = '100%';
+    this._div.style.height = '100%';
+    this._div.style.display = 'none';
+    this._div.style.transformOrigin = '0 0';
+    this._div.style.transform = 'scale(1,1)';
+    this._div.style.display = 'none';
+    this._div.style.display = 'none';
+    this._div.style.zIndex = options.zIndex || 100;
+    this._viewer.canvas.appendChild(this._div);
+    // create display_canvas
+    this._display_ = document.createElement('canvas');
+    this._display_.style.position = 'absolute';
+    this._display_.style.top = 0;
+    this._display_.style.left = 0;
+    this._display_ctx_ = this._display_.getContext('2d');
+    this._div.appendChild(this._display_);
+    // create hover_canvas
+    this._hover_ = document.createElement('canvas');
+    this._hover_.style.position = 'absolute';
+    this._hover_.style.top = 0;
+    this._hover_.style.left = 0;
+    this._hover_ctx_ = this._hover_.getContext('2d');
+    this._div.appendChild(this._hover_);
+
+    this._center = this._viewer.viewport.getCenter(true);
+    this._interval = null;
+    this.updateView();
+    // this._viewer.addHandler('update-viewport',this.updateView.bind(this));
+    this._viewer.addHandler('open', this.updateView.bind(this));
+
+    this._viewer.addHandler('resize', this.updateView.bind(this));
+    this._viewer.addHandler('pan', this.events.panning);
+    this._viewer.addHandler('zoom', this.events.zooming);
+    this._viewer.addHandler('animation-finish', this.events.drawing);
+
+    this._div.addEventListener('mousemove', this.events.highlight);
+    this._div.addEventListener('click', this.events.click);
+  };
+
+
+  $.OverlaysManager.prototype = {
+
+    _zooming: function(e) {
+      if (!this.hasShowOverlay()) return;
+      if (!e.refPoint || e.zoom > this._viewer.viewport.getMaxZoom() || e.zoom &lt; this._viewer.viewport.getMinZoom()) return;
+      if (e.refPoint === true) {
+        e.refPoint = this._viewer.viewport.getCenter(true);
+      }
+      const viewportPoint = this._viewer.viewport.viewportToViewerElementCoordinates(e.refPoint);
+      var viewportZoom = this._viewer.viewport.getZoom();
+      var zoom = this._viewer.viewport.viewportToImageZoom(e.zoom);
+      var scale = viewportZoom/this._zoom;
+      if (scale == 1 || Math.abs(1 - scale) &lt; 0.01) return;
+      this._div.style.transformOrigin = `${viewportPoint.x}px ${viewportPoint.y}px`;
+      this._div.style.transform = `scale(${scale},${scale})`;
+    },
+
+    _panning: function(e) {
+      if (!this.hasShowOverlay()) return;
+      let dx = this._center.x - e.center.x;
+      let dy = this._center.y - e.center.y;
+      const distance = this._viewer.viewport.deltaPixelsFromPoints(new $.Point(dx, dy), true);
+      if (Math.abs(distance.x) &lt; 0.01 &amp;&amp; Math.abs(distance.y) &lt; 0.01) return;
+      let top = parseFloat(this._div.style.top);
+      let left = parseFloat(this._div.style.left);
+      this._div.style.top = `${top + distance.y}px`;
+      this._div.style.left = `${left + distance.x}px`;
+      this._center = e.center;
+    },
+
+
+    _drawing: function(e) {
+      if (!this.hasShowOverlay()) return;
+      // debound if there are a
+      if (this.events['async']) {
+        clearTimeout(this._interval);
+        this._interval = setTimeout(function() {
+          this.events['async'](this.events.updateView);
+        }.bind(this), 800);
+        return;
+      }
+      this.updateView();
+    },
+    /**
+         * @private
+         * highlight the path if cursor on the path
+         * @param  {Event} e the event
+         */
+    highlight: function(e) {
+      this._div.style.cursor = 'default';
+      DrawHelper.clearCanvas(this._hover_);
+      const point = new OpenSeadragon.Point(e.clientX, e.clientY);
+      const img_point = this._viewer.viewport.windowToImageCoordinates(point);
+      for (let i = 0; i&lt;this.overlays.length; i++) {
+        const layer = this.overlays[i];
+        if (!layer.isShow) continue;
+
+        if ($.isArray(layer.data)) {
+          for (let j = 0; j &lt; layer.data.length; j++) {
+            const path = layer.data[j].geometry.path;
+            const style = layer.data[j].properties.style;
+            if (layer.hoverable&amp;&amp;path.contains(img_point.x, img_point.y)) {
+              this.resize();
+              this.highlightPath = path;
+              this.highlightStyle = style;
+              this.highlightLayer = layer;
+              this.highlightLayer.data.selected = j;
+              this.drawOnCanvas(this.drawOnHover, [this._hover_ctx_, this._div, path, style]);
+              return;
+            } else {
+              this.highlightPath = null;
+              this.highlightStyle = null;
+              if (this.highlightLayer) {
+                this.highlightLayer.data.selected = null;
+                this.highlightLayer = null;
+              }
+            }
+          }
+        }
+        if (!layer.data.geometries) continue;
+        const features = layer.data.geometries.features;
+        for (let j = 0; j &lt; features.length; j++) {
+          const path = features[j].geometry.path;
+          const style = features[j].properties.style;
+          this.subIndex = null;
+          if (layer.hoverable&amp;&amp;path&amp;&amp;path.contains(img_point.x, img_point.y)) {
+            this.resize();
+            this.highlightPath = path;
+            this.highlightStyle = style;
+            this.highlightLayer = layer;
+            this.highlightLayer.data.selected = j;
+            this.drawOnCanvas(this.drawOnHover, [this._hover_ctx_, this._div, path, style]);
+            return;
+          } else {
+            this.highlightPath = null;
+            this.highlightStyle = null;
+            this.highlightLayer = null;
+          }
+        }
+      }
+    },
+    /**
+         * @private
+         * pathClick
+         * @param  {Event} e the event
+         */
+    pathClick: function(e) {
+      if (this.highlightLayer&amp;&amp;this.highlightLayer.clickable) {
+        this._viewer.raiseEvent('canvas-lay-click', {position: {x: e.clientX, y: e.clientY}, data: this.highlightLayer?this.highlightLayer.data:null});
+      }
+    },
+
+    /**
+         * setOverlays
+         * add a collection of overlays by geting the data collection
+         * @param {Array} overlays the collection of data of the overlays
+         */
+    setOverlays: function(overlays) {
+      if (!$.isArray(overlays)) return;
+      for (let i = 0; i&lt;overlays.length; i++) {
+        this.addOverlay(overlays[i]);
+      }
+    },
+
+
+    getViewBoundBoxInData: function() {
+      const imagingHelper = this._viewer.imagingHelper;
+      const {x, y} = imagingHelper._viewportOrigin;
+      const width = imagingHelper._viewportWidth;
+      const height = this._viewer.imagingHelper._viewportHeight;
+
+      const x1 = x + width;
+      const y1 = y + height;
+      const min = imagingHelper.logicalToDataPoint({x: x, y: y});
+      const max = imagingHelper.logicalToDataPoint({x: x1, y: y1});
+      return {min, max};
+    },
+    /**
+         * @private
+         * resize the canvas and redraw marks on the proper place
+         */
+    resize: function() {
+      this._div.style.top = 0;
+      this._div.style.left = 0;
+      this._div.style.transformOrigin = '0 0';
+      this._div.style.transform = 'scale(1,1)';
+      this._center = this._viewer.viewport.getCenter(true);
+      this._zoom = this._viewer.viewport.getZoom(true);
+
+      // get global variable for renderer
+      const imagingHelper = this._viewer.imagingHelper;
+      this._display_ctx_._lw = (imagingHelper.physicalToDataX(1) - imagingHelper.physicalToDataX(0)) >> 0;
+      this._display_ctx_.radius = (imagingHelper.physicalToDataX(3) - imagingHelper.physicalToDataX(0)) >> 0;
+      this._display_ctx_.lineWidth = (imagingHelper.physicalToDataX(1) - imagingHelper.physicalToDataX(0)) >> 0; ;
+      this._display_ctx_.viewBoundBoxInData = this.getViewBoundBoxInData();
+      this._display_ctx_.imagingHelper = imagingHelper;
+      //
+      if (this._containerWidth !== this._viewer.container.clientWidth) {
+        this._containerWidth = this._viewer.container.clientWidth;
+        this._div.setAttribute('width', this._containerWidth);
+        this._hover_.setAttribute('width', this._containerWidth);
+        this._display_.setAttribute('width', this._containerWidth);
+      }
+
+      if (this._containerHeight !== this._viewer.container.clientHeight) {
+        this._containerHeight = this._viewer.container.clientHeight;
+        this._div.setAttribute('height', this._containerHeight);
+        this._hover_.setAttribute('height', this._containerHeight);
+        this._display_.setAttribute('height', this._containerHeight);
+      }
+      this._viewportOrigin = new $.Point(0, 0);
+      var boundsRect = this._viewer.viewport.getBounds(true);
+      this._viewportOrigin.x = boundsRect.x;
+      this._viewportOrigin.y = boundsRect.y * this.imgAspectRatio;
+
+      this._viewportWidth = boundsRect.width;
+      this._viewportHeight = boundsRect.height * this.imgAspectRatio;
+      var image1 = this._viewer.world.getItemAt(0);
+      this.imgWidth = image1.source.dimensions.x;
+      this.imgHeight = image1.source.dimensions.y;
+      this.imgAspectRatio = this.imgWidth / this.imgHeight;
+    },
+
+    /**
+         * @private
+         * drawOnCanvas draw marks on canvas
+         * @param  {Canvas} ctx  a canvas' 2d context that the marks draw on
+         * @param  {Function} drawFuc [description]
+         * @return {[type]}         [description]
+         */
+    drawOnCanvas: function(drawFuc, args) {
+      var viewportZoom = this._viewer.viewport.getZoom(true);
+      var image1 = this._viewer.world.getItemAt(0);
+      var zoom = image1.viewportToImageZoom(viewportZoom);
+
+      var x=((this._viewportOrigin.x/this.imgWidth-this._viewportOrigin.x )/this._viewportWidth)*this._containerWidth;
+      var y=((this._viewportOrigin.y/this.imgHeight-this._viewportOrigin.y )/this._viewportHeight)*this._containerHeight;
+
+      DrawHelper.clearCanvas(args[0].canvas);
+      args[0].translate(x, y);
+      args[0].scale(zoom, zoom);
+      drawFuc.apply(this, args);
+      // this.drawOnDisplay(this._display_ctx_);
+      args[0].setTransform(1, 0, 0, 1, 0, 0);
+    },
+
+    /**
+         * hasShowOverlay determine that there is a overlay to show or not
+         * @return {Boolean} return true if has overlay to show. Otherwise, return false.
+         */
+    hasShowOverlay: function() {
+      return this.overlays.some((lay) => lay.isShow == true);
+    },
+
+    /**
+         * @private
+         * drawOnDisplay draw marks on display canvas
+         * @param  {Canvas} ctx  a canvas' 2d context that the marks draw on
+         */
+    drawOnDisplay: function(ctx) {
+      for (var i = 0; i &lt; this.overlays.length; i++) {
+        const layer = this.overlays[i];
+        if (layer.isShow) layer.onDraw(ctx);
+      }
+    },
+
+    viewBoundFilter: function(layer) {
+      // current view's bounding box against a patch
+      if (this._getCanvasBoundBox) {
+        return $.isIntersectBbox(this._getCanvasBoundBox, {
+          x: x,
+          y: y,
+          width: this._size[0],
+          height: this._size[1],
+        });
+      } else {
+        console.log(this._getCanvasBoundBox);
+      }
+    },
+    /**
+         * @private
+         * drawOnHover draw marks on hover canvas
+         * @param  {Canvas} ctx  a canvas' 2d context that the marks draw on
+         * @param  {Path/Path2D} path  the data of a path/marks
+         * @param  {Object} style  the style of drawing
+         */
+    drawOnHover: function(ctx, div, path, style) {
+      div.style.cursor = 'point';
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.fillStyle = hexToRgbA(style.color, 0.2);
+      ctx.strokeStyle = style.color;
+      ctx.lineWidth = style.lineWidth;
+
+
+      if (style.isFill ==undefined || style.isFill) {
+        const imagingHelper = this._viewer.imagingHelper;
+        const lineWidth = (imagingHelper.physicalToDataX(2) - imagingHelper.physicalToDataX(0))>> 0;
+        ctx.lineWidth = lineWidth;
+        path.stroke(this._hover_ctx_);
+        path.fill(this._hover_ctx_);
+      } else {
+        const imagingHelper = this._viewer.imagingHelper;
+        const lineWidth = (imagingHelper.physicalToDataX(2) - imagingHelper.physicalToDataX(0))>> 0;
+        ctx.lineWidth = lineWidth;
+        path.stroke(this._hover_ctx_);
+      }
+    },
+
+    /**
+         * updateView update all canvas according to the current states of the osd'viewer
+         */
+    updateView: function() {
+      this.resize();
+      if (this.hasShowOverlay()) {
+        this._div.style.display = 'block';
+      } else {
+        this._div.style.display = 'none';
+        return;
+      };
+      this.drawOnCanvas(this.drawOnDisplay, [this._display_ctx_]);
+      if (this.highlightPath&amp;&amp; this.highlightLayer&amp;&amp; this.highlightLayer.hoverable) this.drawOnCanvas(this.drawOnHover, [this._hover_ctx_, this._div, this.highlightPath, this.highlightStyle]);
+    },
+
+    /**
+         *
+         * addOverlay add a new over lay
+         * @param {Object} options
+         *        allows configurable properties to be entirely specified by passing an options object to the constructor.
+         * @param {String} options.id
+         *        the overlay's id
+         * @param {Object} options.data
+         *        the data that is used to describe the overlay
+         * @param {object} options.renderer
+         *        the renderer to render the overlay
+         *
+         */
+    addOverlay: function(options) { // id, data, render
+      if (this.overlays.find((layer) => layer.id == options.id)) {
+        console.warn('duplicate overlay ID');
+        return;
+      }
+      options.viewer = this._viewer;
+      const lay = new Overlay(options);
+      this.overlays.push(lay);
+      // TODO redraw
+
+      return lay;
+    },
+
+    /**
+         * remove a overlay from the manager
+         * @param  {String} id overlay's id
+         * @return {Boolean} true - remove success. false - remove fail
+         */
+    removeOverlay: function(id) {
+      const index = this.overlays.findIndex((layer) => layer.id == id);
+      if (index > -1) {
+        this.overlays.splice(index, 1);
+        this.updateView();
+        // const sort = this.overlays.map(layer=>layer.id);
+        // this.setSort(sort.reverse());
+        return true;
+      }
+
+      return false;
+    },
+    /**
+         * get Overlay by id
+         * @param  {String} id the overlay's id
+         * @return {Object}
+         */
+    getOverlay: function(id) {
+      return this.overlays.find((layer) => layer.id == id);
+    },
+
+
+    sort: function() {
+      // for (var i = data.length - 1; i >= 0; i--) {
+      //     const id = data[i];
+      //     const layer = this.getOverlayer(id);
+      //     const index = data.length - i;
+      //     layer.index = index;
+      // }
+    },
+
+    clearOverlays: function() {
+      this.overlays = [];
+    },
+
+    clearCanvas: function() {
+      DrawHelper.clearCanvas(this._display_);
+      DrawHelper.clearCanvas(this._hover_);
+    },
+
+    clear: function() {
+      this.clearCanvas();
+      this.clearOverlays();
+    },
+    /**
+         * Function to destroy the instance of OverlayManager and clean up everything created by OverlayManager.
+         *
+         * Example:
+         * var omanger = OverlayManager({
+         *   [...]
+         * });
+         *
+         * //when you are done with the omanger:
+         * omanger.destroy();
+         * omanger = null; //important
+         *
+         */
+    destroy: function() {
+      for (const key in this) {
+        this[key] = null;
+      }
+    },
+  };
+
+
+  $.extend( $.OverlaysManager.prototype, $.EventSource.prototype);
+
+
+  /**
+   * Overlay a instance of overlay.
+     * @constructor
+     * @param {Object} options
+     *        allows configurable properties to be entirely specified by passing an options object to the constructor.
+     * @param {Object} options.id
+     *        the overlay's id
+     * @param {Object} options.data
+     *        the data that is used to describe the overlay
+     * @param {Object} options.render
+     *        the render that is used to render the overlay
+     */
+  var Overlay = function(options) {
+    this.className = 'Overlay';
+    if (!options) {
+      console.error(`${this.className}: No Options.`);
+      return;
+    }
+    if (!options.id) {
+      console.error(`${this.className}: No ID.`);
+      return;
+    }
+    if (!options.data) {
+      console.error(`${this.className}: No Data.`);
+      return;
+    }
+    if (!options.render || typeof options.render !== 'function') {
+      console.error(`${this.className}: No Render or Illegal.`);
+      return;
+    }
+    this.id = options.id;
+    this.data = options.data;
+    this.render = options.render;
+    // this.clickable = options.clickable || true;
+    // this.hoverable = options.hoverable || true;
+    this.viewer = options.viewer;
+    if (options.clickable!=null &amp;&amp; options.clickable == false) {
+      this.clickable = options.clickable;
+    } else {
+      this.clickable = true;
+    }
+    if (options.hoverable!=null &amp;&amp; options.hoverable == false) {
+      this.hoverable = options.hoverable;
+    } else {
+      this.hoverable = true;
+    }
+    if (options.isShow!=null &amp;&amp; options.isShow == false) {
+      this.isShow = options.isShow;
+    } else {
+      this.isShow = true;
+    }
+    // this.isShow = options.isShow || true;
+  };
+
+  Overlay.prototype = {
+    /**
+         * onDraw draw overlay
+         * @param  {2DContext} ctx
+         *         the context that is used to draw shapes
+         * @param  {[type]} data
+         *         the data that is used to describe the overlay
+         */
+    onDraw: function( ctx, data) {
+      if (data) this.data = data;
+      this.render( ctx, this.data);
+    },
+  };
+})(OpenSeadragon);
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CaMessage.html">CaMessage</a></li><li><a href="CaMic.html">CaMic</a></li><li><a href="CaToolbar.html">CaToolbar</a></li><li><a href="CollapsibleList.html">CollapsibleList</a></li><li><a href="LayersViewer.html">LayersViewer</a></li><li><a href="Loading.html">Loading</a></li><li><a href="MessageQueue.html">MessageQueue</a></li><li><a href="MultSelector.html">MultSelector</a></li><li><a href="OperationPanel.html">OperationPanel</a></li><li><a href="PopupPanel.html">PopupPanel</a></li><li><a href="segmentationanno.html">segmentationanno</a></li><li><a href="SideMenu.html">SideMenu</a></li><li><a href="Spyglass.html">Spyglass</a></li><li><a href="Store.html">Store</a></li><li><a href="StyleContextMenu.html">StyleContextMenu</a></li></ul><h3>Global</h3><ul><li><a href="global.html#elt">elt</a></li><li><a href="global.html#objToParamStr">objToParamStr</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Wed Sep 15 2021 19:57:08 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
