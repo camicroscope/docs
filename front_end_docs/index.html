@@ -17,9 +17,38 @@
 
 <div id="main">
 
-    <h2 class="page-title" style="color:#4d5968;">CaMicroscope Front-End Deveploment Documentation</h2>
-    <img src="../img/dev.png"></img>
+    <h2 style="color:#4d5968;font-weight: bold;font-size: 3.8em;color: #700;margin: 17px 3px 0.5em 3px">CaMicroscope</h2>
+    <h1 style="color:#4d5968;font-weight: bold;font-size: 3em;margin: 0 3px">Front-End Deveploment Documentation</h1>
+    <img src = "https://camicroscope.github.io/img/banner1.jpg"/>
+    <h2 style='margin-left:3rem ;'>Introduction</h2>
 
+    <p style='margin-left:3rem ; font-size: 1.5rem;'>
+    Get started with CaMicroscope, truly free, scalable web-based biomedical image and data viewer, with strong emphasis for viewing, annotating, and analyzing biomedical images.
+    </p>
+    <p style='margin-left:3rem ; font-size: 1.5rem;'>
+        CaMicroscope Front End use OpenSeadragon and Material Icons as dependencies. It is easy to use exsiting UI components (such as CaMic, CaMessage, CaToolbar and LayersViewer ) to quick create and integrate a customized digital biomedical imaging view system. 
+    </p>
+
+    <h2 style='margin-left:3rem ;'>Start</h2>
+    <p style='margin-left:3rem ; font-size: 1.5rem;'>
+    Be sure to have your pages set up with the latest design and development standards. That means using an HTML5 doctype and including a viewport meta tag for proper responsive behaviors.Here is an example of basic usage:
+    </p>
+    <pre>
+    <code>
+      try {
+        const slideQuery = {};
+        slideQuery.id = slideId;
+        slideQuery.name = slideName;
+        slideQuery.location = slideLocationOnService;
+        $CAMIC = new CaMic('main_viewer', slideQuery);
+      } catch (error) {
+        Loading.close();
+        $UI.message.addError('Core Initialization Failed');
+        console.error(error);
+        return;
+      }
+    </code>
+    <pre>
 </div>
 
 <nav>
