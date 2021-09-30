@@ -22,7 +22,7 @@
         </header>
         <!-- Content -->
         <div class="content">
-            <p>caMicroscope is a web-based biomedical image and data viewer, with a strong emphasis on cancer pathology WSI (Whole Slide Imaging). This guide is designed for developers looking to extend caMicroscope through the addition of applications and through the use of machine learning models.</p>
+            <p>caMicroscope is a web-based whole slide pathology image and data viewer, with a strong emphasis on cancer pathology WSI (Whole Slide Imaging). This guide is designed for developers looking to extend caMicroscope through the addition of applications and through the use of machine learning models.</p>
             <h3>Extending caMicroscope</h3>
             <p>caMicroscope has a formalized way to add additional links from the viewer to other pages, internal or external. Link data is stored in mongo in the configuration collection, and an example is provided here (https://github.com/camicroscope/Distro/blob/0dee1948e09a1878e04d0f69311a3c771f02bde0/config/default_data.js#L228). These links may be configured to append the slide id from the viewer.</p><br/>
             <p>The most common way to extend caMicroscope is to include a custom app which consumes the slide id and adds some novel functionality. This involves adding a link to your app, as discussed above, as well as hosting the source alongside caMicroscope by editing the docker-compose deployment configuration (see next section).</p><br/>

@@ -1,2 +1,2 @@
 # docs
-Documentation for caMicroscope
+Documentation website for caMicroscope
